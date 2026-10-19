@@ -3,12 +3,67 @@
  */
 package org.example;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class TodoCliApplicationTest {
+
+    private final InputStream originalSystemIn = System.in;
+    private final PrintStream originalSystemOut = System.out;
     
-    @Test 
-    public void checkMain() {
+    private ByteArrayOutputStream outputStreamCaptor;
+
+    private static final String[] TESTING_ARGS = { "storage/testing.json" };
+    
+    @BeforeEach 
+    void setUp() {
+        outputStreamCaptor = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outputStreamCaptor));
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Restore the original System.in after each test, to prevent conflict with
+        // other tests.
+        System.setIn(originalSystemIn);
+        System.setOut(originalSystemOut);
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(Path.of(TESTING_ARGS[0]).toFile()))) {
+            
+            writer.write("");
+            System.out.println("Clearing JSON Testing database storage file.");
+            
+        } catch (IOException ioe) {
+            System.err.println("Error clearing out JSON Testing database storage file. " + ioe.getMessage());
+        }
+        
+    }
+
+    @Test
+    public void testCLIAddTodo() {
+
+        String inputToAdd = "ADD\nTEST TITLE\nTEST DESCRIPTION";
+        ByteArrayInputStream testCaseInput = new ByteArrayInputStream(inputToAdd.getBytes());
+
+        System.setIn(testCaseInput);
+
+        TodoCliApplication.main(TESTING_ARGS);
+        
+        String consoleOutput = outputStreamCaptor.toString();
+        assertTrue(consoleOutput.contains("Todo successfully entered!"));
 
     }
 }
