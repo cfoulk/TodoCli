@@ -281,7 +281,7 @@ public class TodoCliApplication {
             Map<Long, Todo> tempList = json.fromJson(reader, new TypeToken<Map<Long, Todo>>() {
             }.getType());
 
-            todoList = tempList;
+            if (tempList != null) todoList = tempList;
 
         } catch (IOException e) {
             System.err.println("Input file reader failed: " + e.getMessage());
