@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,12 +24,12 @@ class TodoCliApplicationTest {
 
     private final InputStream originalSystemIn = System.in;
     private final PrintStream originalSystemOut = System.out;
-    
+
     private ByteArrayOutputStream outputStreamCaptor;
 
     private static final String[] TESTING_ARGS = { "storage/testing.json" };
-    
-    @BeforeEach 
+
+    @BeforeEach
     void setUp() {
         outputStreamCaptor = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStreamCaptor));
@@ -40,16 +41,16 @@ class TodoCliApplicationTest {
         // other tests.
         System.setIn(originalSystemIn);
         System.setOut(originalSystemOut);
-        
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(Path.of(TESTING_ARGS[0]).toFile()))) {
-            
+
             writer.write("");
             System.out.println("Clearing JSON Testing database storage file.");
-            
+
         } catch (IOException ioe) {
             System.err.println("Error clearing out JSON Testing database storage file. " + ioe.getMessage());
         }
-        
+
     }
 
     @Test
@@ -61,9 +62,29 @@ class TodoCliApplicationTest {
         System.setIn(testCaseInput);
 
         TodoCliApplication.main(TESTING_ARGS);
-        
+
         String consoleOutput = outputStreamCaptor.toString();
-        assertTrue(consoleOutput.contains("Todo successfully entered!"));
+        assertTrue(consoleOutput.contains("Todo successfully entered!"), "Successful Todo inserted message detected.");
+
+        try {
+
+            boolean foundTitle = false;
+            boolean foundDesc = false;
+
+            List<String> checkStorage = Files.readAllLines(Path.of(TESTING_ARGS[0]));
+            
+            for (String line : checkStorage) {
+                if (line.contains("\"title\": \"TEST TITLE\""))  foundTitle = true;
+                if (line.contains("\"description\": \"TEST DESCRIPTION\""))  foundDesc = true;
+            }
+            
+            assertTrue(foundTitle, "Title found in storage file.");
+            assertTrue(foundDesc, "Description field found in storage file.");
+            
+
+        } catch (IOException ioe) {
+            System.err.println("Exception while checking storage file. " + ioe.getMessage());
+        }
 
     }
 }
